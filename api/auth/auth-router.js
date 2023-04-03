@@ -1,9 +1,11 @@
+const db = require("../../data/db-config");
+
 // `checkUsernameFree`, `checkUsernameExists` ve `checkPasswordLength` gereklidir (require)
 // `auth-middleware.js` deki middleware fonksiyonları. Bunlara burda ihtiyacınız var!
-const router = require('express').Router();
-const userModel = require('../users/users-model');
-const bcrypt = require('bcryptjs');
-const middleware = require('./auth-middleware')
+const router = require("express").Router();
+const userModel = require("../users/users-model");
+const bcrypt = require("bcryptjs");
+const middleware = require("./auth-middleware");
 
 /**
   1 [POST] /api/auth/register { "username": "sue", "password": "1234" }
@@ -28,17 +30,22 @@ const middleware = require('./auth-middleware')
   }
  */
 
-  router.post('/register',middleware.usernameBostami,middleware.sifreGecerlimi,async (req,res,next)=>{
+router.post(
+  "/register",
+  middleware.usernameBostami,
+  middleware.sifreGecerlimi,
+  async (req, res, next) => {
     try {
-      const userBody = req.body
-      const hashedPassword = bcrypt.hashSync(req.body.password, 6)
-      userBody.password = hashedPassword
-      const newUser = await userModel.ekle(userBody)
-      res.status(201).json(newUser)
+      const userBody = req.body;
+      const hashedPassword = bcrypt.hashSync(req.body.password, 6);
+      userBody.password = hashedPassword;
+      const newUser = await userModel.ekle(userBody);
+      res.status(201).json(newUser);
     } catch (error) {
-      next(error)
+      next(error);
     }
-  })
+  }
+);
 
 /**
   2 [POST] /api/auth/login { "username": "sue", "password": "1234" }
@@ -56,6 +63,18 @@ const middleware = require('./auth-middleware')
   }
  */
 
+router.post(
+  "/login",
+  middleware.usernameVarmi,
+  middleware.sinirli,
+  async (req, res, next) => {
+    try {
+      res.status(200).json({ message: `Hoşgeldin ${req.body.username}` });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 /**
   3 [GET] /api/auth/logout
@@ -73,7 +92,6 @@ const middleware = require('./auth-middleware')
   }
  */
 
- 
 // Diğer modüllerde kullanılabilmesi için routerı "exports" nesnesine eklemeyi unutmayın.
 
 module.exports = router;

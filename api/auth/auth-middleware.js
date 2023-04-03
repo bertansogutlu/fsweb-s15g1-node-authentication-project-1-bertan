@@ -1,4 +1,6 @@
+const userModel = require("../users/users-model");
 const db = require("../../data/db-config");
+const bcrypt = require("bcryptjs");
 
 /*
   Kullanıcının sunucuda kayıtlı bir oturumu yoksa
@@ -8,7 +10,17 @@ const db = require("../../data/db-config");
     "message": "Geçemezsiniz!"
   }
 */
-function sinirli() {}
+async function sinirli(req, res, next) {
+  try {
+    if (req.session && req.session.user_id) {
+      next();
+    } else {
+      res.status(401).json({ message: "Geçemezsiniz!" });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
 
 /*
   req.body de verilen username halihazırda veritabanında varsa
@@ -20,11 +32,10 @@ function sinirli() {}
 */
 async function usernameBostami(req, res, next) {
   try {
-    const isUserNaneExist = await db("users").where(
-      "users.username",
-      req.body.username
-    );
-    if (isUserNaneExist.length !== 0) {
+    const isUserNameExist = await userModel.goreBul({
+      "users.username": req.body.username,
+    });
+    if (isUserNameExist.length !== 0) {
       res.status(422).json({ message: "Username kullaniliyor" });
     } else {
       next();
@@ -42,7 +53,20 @@ async function usernameBostami(req, res, next) {
     "message": "Geçersiz kriter"
   }
 */
-function usernameVarmi() {}
+async function usernameVarmi(req, res, next) {
+  try {
+    const user = await userModel.goreBul({
+      "users.username": req.body.username,
+    });
+    if (user.length === 0) {
+      res.status(401).json({ message: "Geçersiz kriter" });
+    } else {
+      next();
+    }
+  } catch (error) {
+    next(error);
+  }
+}
 
 /*
   req.body de şifre yoksa veya 3 karakterden azsa
@@ -55,7 +79,7 @@ function usernameVarmi() {}
 function sifreGecerlimi(req, res, next) {
   try {
     const password = req.body.password;
-    if ( password === undefined || password.length < 3) {
+    if (password === undefined || password.length < 3) {
       res.status(422).json({ message: "Şifre 3 karakterden fazla olmalı" });
     } else {
       next();
