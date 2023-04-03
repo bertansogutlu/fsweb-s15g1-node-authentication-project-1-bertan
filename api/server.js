@@ -17,11 +17,12 @@ const authRouter = require('./auth/auth-router');
  */
 
 const server = express();
-server.use('/api/auth',authRouter)
+
 
 server.use(helmet());
 server.use(express.json());
 server.use(cors());
+server.use('/api/auth',authRouter)
 
 server.get("/", (req, res) => {
   res.json({ api: "up" });

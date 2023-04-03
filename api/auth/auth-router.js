@@ -1,6 +1,7 @@
 // `checkUsernameFree`, `checkUsernameExists` ve `checkPasswordLength` gereklidir (require)
 // `auth-middleware.js` deki middleware fonksiyonları. Bunlara burda ihtiyacınız var!
 const router = require('express').Router();
+const userModel = require('../users/users-model');
 
 /**
   1 [POST] /api/auth/register { "username": "sue", "password": "1234" }
@@ -25,9 +26,11 @@ const router = require('express').Router();
   }
  */
 
-  router.post('/register',(req,res)=>{
+  router.post('/register', async (req,res,next)=>{
     try {
-      res.status(201).json('Post calisiyor')
+      console.log(req.body)
+      const newUser = await userModel.ekle(req.body)
+      res.status(201).json(newUser)
     } catch (error) {
       next(error)
     }
