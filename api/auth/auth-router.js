@@ -1,11 +1,10 @@
-const db = require("../../data/db-config");
-
 // `checkUsernameFree`, `checkUsernameExists` ve `checkPasswordLength` gereklidir (require)
 // `auth-middleware.js` deki middleware fonksiyonları. Bunlara burda ihtiyacınız var!
 const router = require("express").Router();
 const userModel = require("../users/users-model");
 const bcrypt = require("bcryptjs");
 const middleware = require("./auth-middleware");
+const { response } = require("../server");
 
 /**
   1 [POST] /api/auth/register { "username": "sue", "password": "1234" }
@@ -66,10 +65,17 @@ router.post(
 router.post(
   "/login",
   middleware.usernameVarmi,
-  middleware.sinirli,
   async (req, res, next) => {
     try {
-      res.status(200).json({ message: `Hoşgeldin ${req.body.username}` });
+      const users = await userModel.goreBul({ "users.username": req.body.username })
+      const user = users[0]
+      const isValid = bcrypt.compareSync(req.body.password,user.password)
+      if(isValid){
+        req.session.user_id = user.user_id;
+        res.status(200).json({ message: `Hoşgeldin ${req.body.username}` });
+      } else{
+        res.status(401).json({ message: "Geçersiz kriter" });
+      }
     } catch (error) {
       next(error);
     }
@@ -93,5 +99,23 @@ router.post(
  */
 
 // Diğer modüllerde kullanılabilmesi için routerı "exports" nesnesine eklemeyi unutmayın.
+
+router.get('logout',(req,res,next)=>{
+  try {
+    if(req.session.user_id){
+      req.session.destroy(err => {
+        if(err){
+          response.status(500).json({message: "Çıkış yapilirken hata olustu"})
+        } else{
+          response.status(200).json({message: "Çıkış yapildi"})
+        }
+      })
+    }else{
+      response.status(200).json({message: "Oturum bulunamadı!"})
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 
 module.exports = router;
