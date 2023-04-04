@@ -62,25 +62,23 @@ router.post(
   }
  */
 
-router.post(
-  "/login",
-  middleware.usernameVarmi,
-  async (req, res, next) => {
-    try {
-      const users = await userModel.goreBul({ "users.username": req.body.username })
-      const user = users[0]
-      const isValid = bcrypt.compareSync(req.body.password,user.password)
-      if(isValid){
-        req.session.user_id = user.user_id;
-        res.status(200).json({ message: `Hoşgeldin ${req.body.username}` });
-      } else{
-        res.status(401).json({ message: "Geçersiz kriter" });
-      }
-    } catch (error) {
-      next(error);
+router.post("/login", middleware.usernameVarmi, async (req, res, next) => {
+  try {
+    const users = await userModel.goreBul({
+      "users.username": req.body.username,
+    });
+    const user = users[0];
+    const isValid = bcrypt.compareSync(req.body.password, user.password);
+    if (isValid) {
+      req.session.user_id = user.user_id;
+      res.status(200).json({ message: `Hoşgeldin ${req.body.username}` });
+    } else {
+      res.status(401).json({ message: "Geçersiz kriter" });
     }
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 /**
   3 [GET] /api/auth/logout
@@ -100,22 +98,24 @@ router.post(
 
 // Diğer modüllerde kullanılabilmesi için routerı "exports" nesnesine eklemeyi unutmayın.
 
-router.get('logout',(req,res,next)=>{
+router.get("/logout", (req, res, next) => {
   try {
-    if(req.session.user_id){
-      req.session.destroy(err => {
-        if(err){
-          response.status(500).json({message: "Çıkış yapilirken hata olustu"})
-        } else{
-          response.status(200).json({message: "Çıkış yapildi"})
+    if (req.session.user_id) {
+      req.session.destroy((err) => {
+        if (err) {
+          res
+            .status(500)
+            .json({ message: "Çıkış yapilirken hata olustu" });
+        } else {
+          res.status(200).json({ message: "Çıkış yapildi" });
         }
-      })
-    }else{
-      response.status(200).json({message: "Oturum bulunamadı!"})
+      });
+    } else {
+      res.status(200).json({ message: "Oturum bulunamadı!" });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 module.exports = router;
